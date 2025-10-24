@@ -511,8 +511,8 @@
                 // 处理数据格式
                 dictionaryData = processData(data);
                 
-                dataStatus.textContent = `數據加載成功！共 ${dictionaryData.length} 條記錄`;
-                showMessage('數據加載成功！請輸入內容進行查詢');
+                dataStatus.textContent = `數據加載成功! 共 ${dictionaryData.length} 條記錄`;
+                showMessage('數據加載成功! 請輸入內容進行查詢');
                 console.log('成功加載數據，共', dictionaryData.length, '條記錄');
                 
             } catch (error) {
@@ -557,10 +557,10 @@
         function updateSearchHint() {
             if (currentMode === 'character') {
                 searchInput.placeholder = '請輸入要查詢的漢字(多字用空格分隔)...';
-                searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)和注釋(支持多字查詢，用空格分隔)';
+                searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)和注釋(支持多字查詢, 用空格分隔)';
             } else {
                 searchInput.placeholder = '請輸入白話字(BVZ)(多個用空格分隔)...';
-                searchHint.textContent = '輸入白話字(BVZ)反查對應的漢字和注釋(支持多個BVZ查詢，用空格分隔)';
+                searchHint.textContent = '輸入白話字(BVZ)反查對應的漢字和注釋(支持多個BVZ查詢, 用空格分隔)';
             }
         }
         
