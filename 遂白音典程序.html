@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方言字典查询工具 - 单字与BVZ反查</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6b8cbc;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --border-color: #ddd;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --error-color: #dc3545;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .dictionary-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .description {
+            font-size: 1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-section {
+            padding: 25px;
+            border-bottom: 1px solid var(--border-color);
+            background: #f9fafc;
+        }
+        
+        .search-mode {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 12px 15px;
+            text-align: center;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .mode-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .search-box {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        #search-input {
+            flex: 1;
+            padding: 14px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px 0 0 5px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #search-input:focus {
+            border-color: var(--primary-color);
+        }
+        
+        #search-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        #search-button:hover {
+            background: var(--secondary-color);
+        }
+        
+        .search-info {
+            font-size: 0.9rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-icon {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .config-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .config-section h3 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+        
+        .results-section {
+            padding: 25px;
+            min-height: 400px;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .results-count {
+            font-size: 1rem;
+            color: #666;
+        }
+        
+        .result-item {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .character {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+            color: var(--primary-color);
+        }
+        
+        .details {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 15px;
+        }
+        
+        .detail-item {
+            margin-bottom: 10px;
+        }
+        
+        .label {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-right: 8px;
+            display: inline-block;
+            min-width: 60px;
+        }
+        
+        .highlight {
+            background-color: #fff9c4;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .no-results-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: var(--error-color);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .debug-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            overflow-x: auto;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            color: #666;
+            border-top: 1px solid var(--border-color);
+            background: #f9fafc;
+        }
+        
+        @media (max-width: 768px) {
+            .details {
+                grid-template-columns: 1fr;
+            }
+            
+            .character {
+                font-size: 2rem;
+            }
+            
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            #search-input {
+                border-radius: 5px;
+                margin-bottom: 10px;
+            }
+            
+            #search-button {
+                border-radius: 5px;
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dictionary-container">
+        <header>
+            <h1>方言字典查询工具</h1>
+            <p class="description">支持单字查询和BVZ反查功能，输入汉字或BVZ编码查找对应的方言读音和注释</p>
+        </header>
+        
+        <section class="search-section">
+            <div class="search-mode">
+                <button class="mode-btn active" data-mode="character">单字查询</button>
+                <button class="mode-btn" data-mode="bvz">BVZ反查</button>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="请输入要查询的汉字...">
+                <button id="search-button">搜索</button>
+            </div>
+            
+            <p class="search-info">
+                <span class="info-icon">ℹ️</span>
+                <span id="search-hint">输入汉字查询对应的BVZ读音和注释</span>
+            </p>
+            
+            <div class="config-section">
+                <h3>数据状态</h3>
+                <div id="data-status">正在初始化...</div>
+            </div>
+        </section>
+        
+        <section class="results-section" id="results-container">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>正在加载字典数据...</p>
+            </div>
+        </section>
+        
+        <footer>
+            <p>方言字典数据由GitHub提供支持 | 设计：方言研究工具</p>
+        </footer>
+    </div>
+
+    <script>
+        // 配置部分 - 使用您的GitHub JSON URL
+        const CONFIG = {
+            JSON_URL: 'https://raw.githubusercontent.com/Seing-ji/BVZ_DICTIONARY/main/DICTIONARY.json',
+            MAX_RESULTS: 100
+        };
+        
+        // 全局变量
+        let dictionaryData = [];
+        let currentMode = 'character';
+        
+        // DOM元素
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const resultsContainer = document.getElementById('results-container');
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        const searchHint = document.getElementById('search-hint');
+        const dataStatus = document.getElementById('data-status');
+        
+        // 初始化函数
+        async function init() {
+            dataStatus.textContent = '正在初始化...';
+            
+            try {
+                await loadDictionaryData();
+                
+                // 添加事件监听器
+                setupEventListeners();
+                
+                // 聚焦搜索框
+                searchInput.focus();
+                
+            } catch (error) {
+                console.error('初始化失败:', error);
+                showError(`加载数据失败: ${error.message}`);
+            }
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 模式切换
+            modeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    modeButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentMode = this.dataset.mode;
+                    updateSearchHint();
+                    showMessage('请输入内容进行查询');
+                    searchInput.value = '';
+                    searchInput.focus();
+                });
+            });
+            
+            // 搜索功能
+            searchInput.addEventListener('input', handleSearch);
+            searchButton.addEventListener('click', handleSearch);
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+        }
+        
+        // 加载字典数据
+        async function loadDictionaryData() {
+            showLoading();
+            dataStatus.textContent = '正在从GitHub加载数据...';
+            
+            try {
+                console.log('正在从以下URL加载数据:', CONFIG.JSON_URL);
+                
+                // 直接使用fetch
+                const response = await fetch(CONFIG.JSON_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误! 状态: ${response.status} - ${response.statusText}`);
+                }
+                
+                const text = await response.text();
+                console.log('原始响应:', text.substring(0, 500));
+                
+                // 尝试解析JSON
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (parseError) {
+                    console.error('JSON解析错误:', parseError);
+                    throw new Error('JSON格式不正确: ' + parseError.message);
+                }
+                
+                // 处理数据格式
+                dictionaryData = processData(data);
+                
+                dataStatus.textContent = `数据加载成功！共 ${dictionaryData.length} 条记录`;
+                showMessage('数据加载成功！请输入内容进行查询');
+                console.log('成功加载数据，共', dictionaryData.length, '条记录');
+                
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                dataStatus.textContent = `数据加载失败: ${error.message}`;
+                throw error;
+            }
+        }
+        
+        // 处理数据格式
+        function processData(data) {
+            if (!data || typeof data !== 'object') {
+                throw new Error('数据格式不正确');
+            }
+            
+            // 如果数据是对象而不是数组，转换为数组
+            let dataArray;
+            if (Array.isArray(data)) {
+                dataArray = data;
+            } else {
+                // 如果是对象，提取所有值组成数组
+                dataArray = Object.values(data);
+            }
+            
+            // 过滤无效数据并确保字段存在
+            const processedData = dataArray.filter(item => {
+                return item && (item.單字 || item.BVZ);
+            }).map(item => {
+                return {
+                    單字: item.單字 || '',
+                    BVZ: item.BVZ || '',
+                    Note: item.Note || item.note || ''
+                };
+            });
+            
+            console.log('处理后的数据样例:', processedData.slice(0, 3));
+            return processedData;
+        }
+        
+        // 更新搜索提示
+        function updateSearchHint() {
+            if (currentMode === 'character') {
+                searchInput.placeholder = '请输入要查询的汉字...';
+                searchHint.textContent = '输入汉字查询对应的BVZ读音和注释';
+            } else {
+                searchInput.placeholder = '请输入BVZ编码...';
+                searchHint.textContent = '输入BVZ编码反查对应的汉字和注释';
+            }
+        }
+        
+        // 搜索处理函数
+        function handleSearch() {
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                showMessage('请输入内容进行查询');
+                return;
+            }
+            
+            const results = searchDictionary(query);
+            displayResults(results, query);
+        }
+        
+        // 搜索字典数据
+        function searchDictionary(query) {
+            if (!dictionaryData || dictionaryData.length === 0) {
+                return [];
+            }
+            
+            let results = [];
+            
+            if (currentMode === 'character') {
+                results = dictionaryData.filter(item => {
+                    return item.單字 && item.單字.includes(query);
+                });
+            } else {
+                results = dictionaryData.filter(item => {
+                    return item.BVZ && item.BVZ.includes(query);
+                });
+            }
+            
+            return results.slice(0, CONFIG.MAX_RESULTS);
+        }
+        
+        // 显示搜索结果
+        function displayResults(results, query) {
+            if (results.length === 0) {
+                showMessage(`没有找到与"${query}"相关的结果`);
+                return;
+            }
+            
+            let html = `
+                <div class="results-header">
+                    <h2>搜索结果</h2>
+                    <div class="results-count">找到 ${results.length} 条结果</div>
+                </div>
+            `;
+            
+            results.forEach(item => {
+                const highlightedCharacter = highlightText(item.單字 || '', query, currentMode === 'character');
+                const highlightedBvz = highlightText(item.BVZ || '', query, currentMode === 'bvz');
+                const note = item.Note || '';
+                
+                html += `
+                    <div class="result-item">
+                        <div class="character">${highlightedCharacter}</div>
+                        <div class="details">
+                            <div class="detail-item">
+                                <span class="label">BVZ:</span> ${highlightedBvz}
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">注释:</span> ${note}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        // 高亮匹配文本
+        function highlightText(text, query, isPrimarySearch) {
+            if (!query || !text) return escapeHtml(text);
+            
+            if (isPrimarySearch) {
+                const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                return escapeHtml(text).replace(regex, match => `<span class="highlight">${match}</span>`);
+            }
+            
+            return escapeHtml(text);
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            resultsContainer.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在加载字典数据...</p>
+                </div>
+            `;
+        }
+        
+        // 显示消息
+        function showMessage(message) {
+            resultsContainer.innerHTML = `
+                <div class="no-results">
+                    <div class="no-results-icon">🔍</div>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+        
+        // 显示错误
+        function showError(message) {
+            resultsContainer.innerHTML = `
+                <div class="error-message">
+                    <strong>错误:</strong> ${message}
+                    <div class="debug-info">
+                        <div>当前URL: ${CONFIG.JSON_URL}</div>
+                        <div>数据长度: ${dictionaryData.length}</div>
+                        <div>请检查: 1. URL是否正确 2. JSON格式是否正确 3. 网络连接</div>
+                        <div>如果问题持续，请尝试刷新页面或检查控制台错误信息</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // HTML转义函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
