@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遂溪遂城白話音典 - 單字与白話字（BVZ）反查</title>
+    <title>遂溪遂城白話音典 - 單字与白話字(BVZ)反查</title>
     <style>
         :root {
             --primary-color: #4a6fa5;
@@ -381,7 +381,7 @@
     <div class="dictionary-container">
         <header>
             <h1>遂溪遂城白話音典</h1>
-            <p class="description">支持單字和白話字（BVZ）反查功能，輸入繁體漢字或白話字（BVZ）查找對應的方言讀音和注釋</p>
+            <p class="description">支持單字和白話字(BVZ)反查功能，輸入繁體漢字或白話字(BVZ)查找對應的方言讀音和注釋</p>
         </header>
         
         <section class="search-section">
@@ -397,7 +397,7 @@
             
             <p class="search-info">
                 <span class="info-icon">ℹ️</span>
-                <span id="search-hint">輸入漢字查詢對應的白話字(BVZ)讀音和注釋</span>
+                <span id="search-hint">輸入漢字查詢對應的BVZ讀音和注釋(支持多字查詢，用空格分隔)</span>
             </p>
             
             <div class="config-section">
@@ -511,8 +511,8 @@
                 // 处理数据格式
                 dictionaryData = processData(data);
                 
-                dataStatus.textContent = `數據加載成功! 共 ${dictionaryData.length} 條記錄`;
-                showMessage('數據加載成功! 請輸入內容進行查詢');
+                dataStatus.textContent = `數據加載成功！共 ${dictionaryData.length} 條記錄`;
+                showMessage('數據加載成功！請輸入內容進行查詢');
                 console.log('成功加載數據，共', dictionaryData.length, '條記錄');
                 
             } catch (error) {
@@ -553,14 +553,14 @@
             return processedData;
         }
         
-        // 更新搜索提示 - 直接使用Unicode字符
+        // 更新搜索提示 - 使用英文括号
         function updateSearchHint() {
             if (currentMode === 'character') {
-                searchInput.placeholder = '請輸入要查詢的漢字...';
-                searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)讀音和注釋';
+                searchInput.placeholder = '請輸入要查詢的漢字(多字用空格分隔)...';
+                searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)讀音和注釋(支持多字查詢，用空格分隔)';
             } else {
-                searchInput.placeholder = '請輸入白話字(BVZ)...';
-                searchHint.textContent = '輸入白話字(BVZ)反查對應的漢字和注釋';
+                searchInput.placeholder = '請輸入白話字(BVZ)(多個用空格分隔)...';
+                searchHint.textContent = '輸入白話字(BVZ)反查對應的漢字和注釋(支持多個BVZ查詢，用空格分隔)';
             }
         }
         
@@ -577,7 +577,7 @@
             displayResults(results, query);
         }
         
-        // 搜索字典数据
+        // 搜索字典数据 - 支持多字查询
         function searchDictionary(query) {
             if (!dictionaryData || dictionaryData.length === 0) {
                 return [];
@@ -586,13 +586,35 @@
             let results = [];
             
             if (currentMode === 'character') {
-                results = dictionaryData.filter(item => {
-                    return item.單字 && item.單字.includes(query);
-                });
+                // 分割查询词，支持多字查询
+                const searchTerms = query.split(/\s+/).filter(term => term.length > 0);
+                
+                if (searchTerms.length === 1) {
+                    // 单个字查询
+                    results = dictionaryData.filter(item => {
+                        return item.單字 && item.單字.includes(searchTerms[0]);
+                    });
+                } else {
+                    // 多字查询 - 查找包含任意一个查询字的条目
+                    results = dictionaryData.filter(item => {
+                        return item.單字 && searchTerms.some(term => item.單字.includes(term));
+                    });
+                }
             } else {
-                results = dictionaryData.filter(item => {
-                    return item.BVZ && item.BVZ.includes(query);
-                });
+                // 分割查询词，支持多个BVZ查询
+                const searchTerms = query.split(/\s+/).filter(term => term.length > 0);
+                
+                if (searchTerms.length === 1) {
+                    // 单个BVZ查询
+                    results = dictionaryData.filter(item => {
+                        return item.BVZ && item.BVZ.includes(searchTerms[0]);
+                    });
+                } else {
+                    // 多个BVZ查询 - 查找包含任意一个查询BVZ的条目
+                    results = dictionaryData.filter(item => {
+                        return item.BVZ && searchTerms.some(term => item.BVZ.includes(term));
+                    });
+                }
             }
             
             return results.slice(0, CONFIG.MAX_RESULTS);
@@ -612,9 +634,12 @@
                 </div>
             `;
             
+            // 分割查询词用于高亮
+            const searchTerms = query.split(/\s+/).filter(term => term.length > 0);
+            
             results.forEach(item => {
-                const highlightedCharacter = highlightText(item.單字 || '', query, currentMode === 'character');
-                const highlightedBvz = highlightText(item.BVZ || '', query, currentMode === 'bvz');
+                const highlightedCharacter = highlightText(item.單字 || '', searchTerms, currentMode === 'character');
+                const highlightedBvz = highlightText(item.BVZ || '', searchTerms, currentMode === 'bvz');
                 const note = item.Note || '';
                 
                 html += `
@@ -635,16 +660,22 @@
             resultsContainer.innerHTML = html;
         }
         
-        // 高亮匹配文本 - 简化版本
-        function highlightText(text, query, isPrimarySearch) {
-            if (!query || !text) return text;
+        // 高亮匹配文本 - 支持多词高亮
+        function highlightText(text, searchTerms, isPrimarySearch) {
+            if (!searchTerms || searchTerms.length === 0 || !text) return text;
+            
+            let highlightedText = text;
             
             if (isPrimarySearch) {
-                const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-                return text.replace(regex, match => `<span class="highlight">${match}</span>`);
+                searchTerms.forEach(term => {
+                    if (term) {
+                        const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                        highlightedText = highlightedText.replace(regex, match => `<span class="highlight">${match}</span>`);
+                    }
+                });
             }
             
-            return text;
+            return highlightedText;
         }
         
         // 显示加载状态
