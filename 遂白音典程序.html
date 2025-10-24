@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遂溪遂城白話音典 - 單字与白話字(BVZ)反查</title>
+    <title>遂溪遂城白話音典 - 漢字与白話字(BVZ)反查</title>
     <style>
         :root {
             --primary-color: #4a6fa5;
@@ -209,7 +209,7 @@
         }
         
         .character {
-            font-size: 2.5rem;
+            font-size: 2.7rem;
             margin-bottom: 15px;
             font-weight: bold;
             text-align: center;
@@ -381,13 +381,13 @@
     <div class="dictionary-container">
         <header>
             <h1>遂溪遂城白話音典</h1>
-            <p class="description">支持單字和白話字(BVZ)反查功能，輸入繁體漢字或白話字(BVZ)查找對應的方言讀音和注釋</p>
+            <p class="description">支持漢字和白話字(BVZ)反查功能，輸入繁體漢字或白話字(BVZ)查找對應的方言讀音和注釋</p>
         </header>
         
         <section class="search-section">
             <div class="search-mode">
-                <button class="mode-btn active" data-mode="character">單字查詢</button>
-                <button class="mode-btn" data-mode="bvz">BVZ反查</button>
+                <button class="mode-btn active" data-mode="character">漢字查BVZ</button>
+                <button class="mode-btn" data-mode="bvz">BVZ反查漢字</button>
             </div>
             
             <div class="search-box">
@@ -557,7 +557,7 @@
         function updateSearchHint() {
             if (currentMode === 'character') {
                 searchInput.placeholder = '請輸入要查詢的漢字(多字用空格分隔)...';
-                searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)讀音和注釋(支持多字查詢，用空格分隔)';
+                searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)和注釋(支持多字查詢，用空格分隔)';
             } else {
                 searchInput.placeholder = '請輸入白話字(BVZ)(多個用空格分隔)...';
                 searchHint.textContent = '輸入白話字(BVZ)反查對應的漢字和注釋(支持多個BVZ查詢，用空格分隔)';
