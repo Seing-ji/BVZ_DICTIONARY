@@ -381,7 +381,7 @@
     <div class="dictionary-container">
         <header>
             <h1>遂溪遂城白話音典</h1>
-            <p class="description">支持單字和白話字（BVZ）反查功能，輸入䌓體漢字或白話字（BVZ）查找對應的方言讀音和注釋</p>
+            <p class="description">支持單字和白話字（BVZ）反查功能，輸入繁體漢字或白話字（BVZ）查找對應的方言讀音和注釋</p>
         </header>
         
         <section class="search-section">
@@ -397,7 +397,7 @@
             
             <p class="search-info">
                 <span class="info-icon">ℹ️</span>
-                <span id="search-hint">輸入漢字查詢對應的BVZ讀音和注釋</span>
+                <span id="search-hint">輸入漢字查詢對應的白話字(BVZ)讀音和注釋</span>
             </p>
             
             <div class="config-section">
@@ -465,7 +465,7 @@
                     this.classList.add('active');
                     currentMode = this.dataset.mode;
                     updateSearchHint();
-                    showMessage('请輸入内容進行查詢');
+                    showMessage('請輸入內容進行查詢');
                     searchInput.value = '';
                     searchInput.focus();
                 });
@@ -484,7 +484,7 @@
         // 加载字典数据
         async function loadDictionaryData() {
             showLoading();
-            dataStatus.textContent = '正在从GitHub加載數據...';
+            dataStatus.textContent = '正在從GitHub加載數據...';
             
             try {
                 console.log('正在從以下URL加載數據:', CONFIG.JSON_URL);
@@ -493,7 +493,7 @@
                 const response = await fetch(CONFIG.JSON_URL);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP错误! 状态: ${response.status} - ${response.statusText}`);
+                    throw new Error(`HTTP錯誤! 狀態: ${response.status} - ${response.statusText}`);
                 }
                 
                 const text = await response.text();
@@ -511,8 +511,8 @@
                 // 处理数据格式
                 dictionaryData = processData(data);
                 
-                dataStatus.textContent = `數據加載成功！共 ${dictionaryData.length} 條記錄`;
-                showMessage('數據加載成功！请輸入内容進行查詢');
+                dataStatus.textContent = `數據加載成功! 共 ${dictionaryData.length} 條記錄`;
+                showMessage('數據加載成功! 請輸入內容進行查詢');
                 console.log('成功加載數據，共', dictionaryData.length, '條記錄');
                 
             } catch (error) {
@@ -525,7 +525,7 @@
         // 处理数据格式
         function processData(data) {
             if (!data || typeof data !== 'object') {
-                throw new Error('數據格式不正礭');
+                throw new Error('數據格式不正確');
             }
             
             // 如果数据是对象而不是数组，转换为数组
@@ -553,14 +553,14 @@
             return processedData;
         }
         
-        // 更新搜索提示
+        // 更新搜索提示 - 直接使用Unicode字符
         function updateSearchHint() {
             if (currentMode === 'character') {
                 searchInput.placeholder = '請輸入要查詢的漢字...';
-                searchHint.textContent = '輸入漢字查詢對應的白話字（BVZ）讀音和注釋';
+                searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)讀音和注釋';
             } else {
-                searchInput.placeholder = '请輸入白話字（BVZ）...';
-                searchHint.textContent = '输入白話字（BVZ）反查對應的漢字和注釋';
+                searchInput.placeholder = '請輸入白話字(BVZ)...';
+                searchHint.textContent = '輸入白話字(BVZ)反查對應的漢字和注釋';
             }
         }
         
@@ -569,7 +569,7 @@
             const query = searchInput.value.trim();
             
             if (!query) {
-                showMessage('請輸入内容進行查詢');
+                showMessage('請輸入內容進行查詢');
                 return;
             }
             
@@ -601,7 +601,7 @@
         // 显示搜索结果
         function displayResults(results, query) {
             if (results.length === 0) {
-                showMessage(`没有找到與"${query}"相關的結果`);
+                showMessage(`沒有找到與"${query}"相關的結果`);
                 return;
             }
             
@@ -635,16 +635,16 @@
             resultsContainer.innerHTML = html;
         }
         
-        // 高亮匹配文本
+        // 高亮匹配文本 - 简化版本
         function highlightText(text, query, isPrimarySearch) {
-            if (!query || !text) return escapeHtml(text);
+            if (!query || !text) return text;
             
             if (isPrimarySearch) {
                 const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-                return escapeHtml(text).replace(regex, match => `<span class="highlight">${match}</span>`);
+                return text.replace(regex, match => `<span class="highlight">${match}</span>`);
             }
             
-            return escapeHtml(text);
+            return text;
         }
         
         // 显示加载状态
@@ -652,7 +652,7 @@
             resultsContainer.innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
-                    <p>正在加載字典数據...</p>
+                    <p>正在加載字典數據...</p>
                 </div>
             `;
         }
@@ -673,20 +673,13 @@
                 <div class="error-message">
                     <strong>錯誤:</strong> ${message}
                     <div class="debug-info">
-                        <div>当前URL: ${CONFIG.JSON_URL}</div>
-                        <div>數據长度: ${dictionaryData.length}</div>
+                        <div>當前URL: ${CONFIG.JSON_URL}</div>
+                        <div>數據長度: ${dictionaryData.length}</div>
                         <div>請檢查: 1. URL是否正確 2. JSON格式是否正確 3. 網絡連接</div>
-                        <div>如果問題持續，請嘗試刷新頁面或檢查控制臺錯誤信息</div>
+                        <div>如果問題持續，請嘗試刷新頁面或檢查控制台錯誤信息</div>
                     </div>
                 </div>
             `;
-        }
-        
-        // HTML转义函数
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
         
         // 页面加载完成后初始化
