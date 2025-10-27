@@ -58,7 +58,7 @@
         }
         
         .description {
-            font-size: 1.2rem;
+            font-size: 1rem;
             opacity: 0.9;
             max-width: 600px;
             margin: 0 auto;
@@ -187,7 +187,7 @@
         }
         
         .results-count {
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: #666;
             font-family: 'Iansui', 'Times New Roman', serif;
         }
@@ -208,13 +208,15 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
+        /* 统一字符显示大小 - 确保两种模式下一致 */
         .character {
-            font-size: 3.5rem;
+            font-size: 2.5rem;
             margin-bottom: 15px;
             font-weight: bold;
             text-align: center;
             color: var(--primary-color);
             font-family: 'Iansui', 'Times New Roman', serif;
+            line-height: 1.2;
         }
         
         .details {
@@ -228,6 +230,8 @@
             margin-bottom: 10px;
             font-family: 'Iansui', 'Times New Roman', serif;
             font-size: 1.2rem;
+            display: flex;
+            align-items: flex-start;
         }
         
         .label {
@@ -238,14 +242,23 @@
             min-width: 60px;
             font-family: 'Iansui', 'Times New Roman', serif;
             font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        
+        /* 统一BVZ字段样式 */
+        .bvz-value {
+            font-family: 'Times New Roman', 'Iansui', serif !important;
+            font-size: 1.4rem;
+            font-weight: bold;
+            line-height: 1.3;
         }
         
         .highlight {
             background-color: #fff9c4;
-            padding: 0 2px;
-            border-radius: 2px;
-            font-family: 'Times New Roman', 'Iansui', serif;
-            font-size: 2.2rem;
+            padding: 1px 3px;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: inherit;
         }
         
         .no-results {
@@ -314,16 +327,9 @@
         }
         
         /* 特别针对英文内容的样式 */
-        .english-text, #search-button, .info-icon, .highlight, .debug-info, .no-results-icon {
+        .english-text, #search-button, .info-icon, .debug-info, .no-results-icon {
             font-family: 'Times New Roman', 'Iansui', serif !important;
             font-size: 1.2rem;
-        }
-        
-        /* BVZ字段特别设置 */
-        .detail-item .label + * {
-            font-family: 'Times New Roman', 'Iansui', serif !important;
-            font-size: 1.3rem;
-            font-weight: bold;
         }
         
         @media (max-width: 768px) {
@@ -332,7 +338,7 @@
             }
             
             .character {
-                font-size: 2rem;
+                font-size: 2.2rem;
             }
             
             .results-header {
@@ -343,6 +349,10 @@
             
             .mode-btn, #search-input, #search-button, .search-info, .detail-item, .label {
                 font-size: 1.1rem;
+            }
+            
+            .bvz-value {
+                font-size: 1.3rem;
             }
         }
         
@@ -373,6 +383,14 @@
             
             .mode-btn, .search-info, .detail-item, .label {
                 font-size: 1rem;
+            }
+            
+            .character {
+                font-size: 2rem;
+            }
+            
+            .bvz-value {
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -638,8 +656,9 @@
             const searchTerms = query.split(/\s+/).filter(term => term.length > 0);
             
             results.forEach(item => {
-                const highlightedCharacter = highlightText(item.單字 || '', searchTerms, currentMode === 'character');
-                const highlightedBvz = highlightText(item.BVZ || '', searchTerms, currentMode === 'bvz');
+                // 在两种模式下都应用高亮
+                const highlightedCharacter = highlightText(item.單字 || '', searchTerms);
+                const highlightedBvz = highlightText(item.BVZ || '', searchTerms);
                 const note = item.Note || '';
                 
                 html += `
@@ -647,10 +666,12 @@
                         <div class="character">${highlightedCharacter}</div>
                         <div class="details">
                             <div class="detail-item">
-                                <span class="label">BVZ:</span> <span class="english-text">${highlightedBvz}</span>
+                                <span class="label">BVZ:</span> 
+                                <span class="bvz-value">${highlightedBvz}</span>
                             </div>
                             <div class="detail-item">
-                                <span class="label">注釋:</span> ${note}
+                                <span class="label">注釋:</span> 
+                                <span>${note}</span>
                             </div>
                         </div>
                     </div>
@@ -660,20 +681,18 @@
             resultsContainer.innerHTML = html;
         }
         
-        // 高亮匹配文本 - 支持多词高亮
-        function highlightText(text, searchTerms, isPrimarySearch) {
+        // 高亮匹配文本 - 支持多词高亮，两种模式都应用
+        function highlightText(text, searchTerms) {
             if (!searchTerms || searchTerms.length === 0 || !text) return text;
             
             let highlightedText = text;
             
-            if (isPrimarySearch) {
-                searchTerms.forEach(term => {
-                    if (term) {
-                        const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-                        highlightedText = highlightedText.replace(regex, match => `<span class="highlight">${match}</span>`);
-                    }
-                });
-            }
+            searchTerms.forEach(term => {
+                if (term) {
+                    const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                    highlightedText = highlightedText.replace(regex, match => `<span class="highlight">${match}</span>`);
+                }
+            });
             
             return highlightedText;
         }
