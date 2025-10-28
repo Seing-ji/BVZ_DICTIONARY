@@ -138,6 +138,27 @@
             background: var(--secondary-color);
         }
         
+        .search-options {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            font-family: 'Iansui', 'Times New Roman', serif;
+        }
+        
+        .exact-match-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .exact-match-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
         .search-info {
             font-size: 1.1rem;
             color: #666;
@@ -350,6 +371,12 @@
             .bvz-value {
                 font-size: 1.3rem;
             }
+            
+            .search-options {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
         }
         
         @media (max-width: 600px) {
@@ -409,6 +436,13 @@
                 <button id="search-button">搜索</button>
             </div>
             
+            <div class="search-options">
+                <div class="exact-match-option">
+                    <input type="checkbox" id="exact-match" class="exact-match-checkbox">
+                    <label for="exact-match">精確匹配</label>
+                </div>
+            </div>
+            
             <p class="search-info">
                 <span class="info-icon">ℹ️</span>
                 <span id="search-hint">輸入漢字查詢對應的BVZ讀音和注釋(支持多字查詢，用空格分隔)</span>
@@ -442,6 +476,7 @@
         // 全局变量
         let dictionaryData = [];
         let currentMode = 'character';
+        let exactMatch = false;
         
         // DOM元素
         const searchInput = document.getElementById('search-input');
@@ -450,6 +485,7 @@
         const modeButtons = document.querySelectorAll('.mode-btn');
         const searchHint = document.getElementById('search-hint');
         const dataStatus = document.getElementById('data-status');
+        const exactMatchCheckbox = document.getElementById('exact-match');
         
         // 初始化函数
         async function init() {
@@ -483,6 +519,12 @@
                     searchInput.value = '';
                     searchInput.focus();
                 });
+            });
+            
+            // 精确匹配复选框
+            exactMatchCheckbox.addEventListener('change', function() {
+                exactMatch = this.checked;
+                updateSearchHint();
             });
             
             // 搜索功能
@@ -571,10 +613,18 @@
         function updateSearchHint() {
             if (currentMode === 'character') {
                 searchInput.placeholder = '請輸入要查詢的漢字(多字用空格分隔)...';
-                searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)和注釋(支持多字查詢, 用空格分隔)';
+                if (exactMatch) {
+                    searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)和注釋(精確匹配模式)';
+                } else {
+                    searchHint.textContent = '輸入漢字查詢對應的白話字(BVZ)和注釋(支持多字查詢, 用空格分隔)';
+                }
             } else {
                 searchInput.placeholder = '請輸入白話字(BVZ)(多個用空格分隔)...';
-                searchHint.textContent = '輸入白話字(BVZ)反查對應的漢字和注釋(支持多個BVZ查詢, 用空格分隔)';
+                if (exactMatch) {
+                    searchHint.textContent = '輸入白話字(BVZ)反查對應的漢字和注釋(精確匹配模式)';
+                } else {
+                    searchHint.textContent = '輸入白話字(BVZ)反查對應的漢字和注釋(支持多個BVZ查詢, 用空格分隔)';
+                }
             }
         }
         
@@ -598,36 +648,57 @@
             }
             
             let results = [];
+            const searchTerms = query.split(/\s+/).filter(term => term.length > 0);
             
             if (currentMode === 'character') {
-                // 分割查询词，支持多字查询
-                const searchTerms = query.split(/\s+/).filter(term => term.length > 0);
-                
-                if (searchTerms.length === 1) {
-                    // 单个字查询
-                    results = dictionaryData.filter(item => {
-                        return item.單字 && item.單字.includes(searchTerms[0]);
-                    });
+                // 汉字查BVZ模式
+                if (exactMatch) {
+                    // 精确匹配模式
+                    if (searchTerms.length === 1) {
+                        results = dictionaryData.filter(item => {
+                            return item.單字 && item.單字 === searchTerms[0];
+                        });
+                    } else {
+                        results = dictionaryData.filter(item => {
+                            return item.單字 && searchTerms.some(term => item.單字 === term);
+                        });
+                    }
                 } else {
-                    // 多字查询 - 查找包含任意一个查询字的条目
-                    results = dictionaryData.filter(item => {
-                        return item.單字 && searchTerms.some(term => item.單字.includes(term));
-                    });
+                    // 模糊匹配模式
+                    if (searchTerms.length === 1) {
+                        results = dictionaryData.filter(item => {
+                            return item.單字 && item.單字.includes(searchTerms[0]);
+                        });
+                    } else {
+                        results = dictionaryData.filter(item => {
+                            return item.單字 && searchTerms.some(term => item.單字.includes(term));
+                        });
+                    }
                 }
             } else {
-                // 分割查询词，支持多个BVZ查询
-                const searchTerms = query.split(/\s+/).filter(term => term.length > 0);
-                
-                if (searchTerms.length === 1) {
-                    // 单个BVZ查询
-                    results = dictionaryData.filter(item => {
-                        return item.BVZ && item.BVZ.includes(searchTerms[0]);
-                    });
+                // BVZ反查汉字模式
+                if (exactMatch) {
+                    // 精确匹配模式
+                    if (searchTerms.length === 1) {
+                        results = dictionaryData.filter(item => {
+                            return item.BVZ && item.BVZ === searchTerms[0];
+                        });
+                    } else {
+                        results = dictionaryData.filter(item => {
+                            return item.BVZ && searchTerms.some(term => item.BVZ === term);
+                        });
+                    }
                 } else {
-                    // 多个BVZ查询 - 查找包含任意一个查询BVZ的条目
-                    results = dictionaryData.filter(item => {
-                        return item.BVZ && searchTerms.some(term => item.BVZ.includes(term));
-                    });
+                    // 模糊匹配模式
+                    if (searchTerms.length === 1) {
+                        results = dictionaryData.filter(item => {
+                            return item.BVZ && item.BVZ.includes(searchTerms[0]);
+                        });
+                    } else {
+                        results = dictionaryData.filter(item => {
+                            return item.BVZ && searchTerms.some(term => item.BVZ.includes(term));
+                        });
+                    }
                 }
             }
             
@@ -644,7 +715,7 @@
             let html = `
                 <div class="results-header">
                     <h2>搜索結果</h2>
-                    <div class="results-count">找到 ${results.length} 條結果</div>
+                    <div class="results-count">找到 ${results.length} 條結果 ${exactMatch ? '(精確匹配)' : ''}</div>
                 </div>
             `;
             
