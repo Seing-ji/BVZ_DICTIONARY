@@ -477,6 +477,7 @@
         let dictionaryData = [];
         let currentMode = 'character';
         let exactMatch = false;
+        let searchTimeout = null;
         
         // DOM元素
         const searchInput = document.getElementById('search-input');
@@ -525,16 +526,55 @@
             exactMatchCheckbox.addEventListener('change', function() {
                 exactMatch = this.checked;
                 updateSearchHint();
-            });
-            
-            // 搜索功能
-            searchInput.addEventListener('input', handleSearch);
-            searchButton.addEventListener('click', handleSearch);
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
+                // 复选框改变时立即搜索
+                const query = searchInput.value.trim();
+                if (query) {
                     handleSearch();
                 }
             });
+            
+            // 搜索功能 - 使用防抖
+            searchInput.addEventListener('input', function() {
+                // 清除之前的定时器
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                
+                const query = this.value.trim();
+                
+                // 如果输入为空，显示提示信息
+                if (!query) {
+                    showMessage('請輸入內容進行查詢');
+                    return;
+                }
+                
+                // 设置新的定时器，延迟300毫秒执行搜索
+                searchTimeout = setTimeout(() => {
+                    performSearch(query);
+                }, 300);
+            });
+            
+            searchButton.addEventListener('click', function() {
+                const query = searchInput.value.trim();
+                if (query) {
+                    performSearch(query);
+                }
+            });
+            
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const query = this.value.trim();
+                    if (query) {
+                        performSearch(query);
+                    }
+                }
+            });
+        }
+        
+        // 执行搜索
+        function performSearch(query) {
+            const results = searchDictionary(query);
+            displayResults(results, query);
         }
         
         // 加载字典数据
@@ -641,63 +681,63 @@
             displayResults(results, query);
         }
         
-        // 搜索字典数据 - 支持多字查询
+        // 搜索字典数据 - 优化性能
         function searchDictionary(query) {
             if (!dictionaryData || dictionaryData.length === 0) {
                 return [];
             }
             
-            let results = [];
             const searchTerms = query.split(/\s+/).filter(term => term.length > 0);
+            const results = [];
             
             if (currentMode === 'character') {
                 // 汉字查BVZ模式
                 if (exactMatch) {
-                    // 精确匹配模式
-                    if (searchTerms.length === 1) {
-                        results = dictionaryData.filter(item => {
-                            return item.單字 && item.單字 === searchTerms[0];
-                        });
-                    } else {
-                        results = dictionaryData.filter(item => {
-                            return item.單字 && searchTerms.some(term => item.單字 === term);
-                        });
+                    // 精确匹配模式 - 使用Set提高性能
+                    const termSet = new Set(searchTerms);
+                    for (let i = 0; i < dictionaryData.length; i++) {
+                        const item = dictionaryData[i];
+                        if (item.單字 && termSet.has(item.單字)) {
+                            results.push(item);
+                        }
                     }
                 } else {
-                    // 模糊匹配模式
-                    if (searchTerms.length === 1) {
-                        results = dictionaryData.filter(item => {
-                            return item.單字 && item.單字.includes(searchTerms[0]);
-                        });
-                    } else {
-                        results = dictionaryData.filter(item => {
-                            return item.單字 && searchTerms.some(term => item.單字.includes(term));
-                        });
+                    // 模糊匹配模式 - 优化循环
+                    for (let i = 0; i < dictionaryData.length; i++) {
+                        const item = dictionaryData[i];
+                        if (item.單字) {
+                            for (let j = 0; j < searchTerms.length; j++) {
+                                if (item.單字.includes(searchTerms[j])) {
+                                    results.push(item);
+                                    break; // 找到一个匹配就跳出内层循环
+                                }
+                            }
+                        }
                     }
                 }
             } else {
                 // BVZ反查汉字模式
                 if (exactMatch) {
-                    // 精确匹配模式
-                    if (searchTerms.length === 1) {
-                        results = dictionaryData.filter(item => {
-                            return item.BVZ && item.BVZ === searchTerms[0];
-                        });
-                    } else {
-                        results = dictionaryData.filter(item => {
-                            return item.BVZ && searchTerms.some(term => item.BVZ === term);
-                        });
+                    // 精确匹配模式 - 使用Set提高性能
+                    const termSet = new Set(searchTerms);
+                    for (let i = 0; i < dictionaryData.length; i++) {
+                        const item = dictionaryData[i];
+                        if (item.BVZ && termSet.has(item.BVZ)) {
+                            results.push(item);
+                        }
                     }
                 } else {
-                    // 模糊匹配模式
-                    if (searchTerms.length === 1) {
-                        results = dictionaryData.filter(item => {
-                            return item.BVZ && item.BVZ.includes(searchTerms[0]);
-                        });
-                    } else {
-                        results = dictionaryData.filter(item => {
-                            return item.BVZ && searchTerms.some(term => item.BVZ.includes(term));
-                        });
+                    // 模糊匹配模式 - 优化循环
+                    for (let i = 0; i < dictionaryData.length; i++) {
+                        const item = dictionaryData[i];
+                        if (item.BVZ) {
+                            for (let j = 0; j < searchTerms.length; j++) {
+                                if (item.BVZ.includes(searchTerms[j])) {
+                                    results.push(item);
+                                    break; // 找到一个匹配就跳出内层循环
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -718,6 +758,10 @@
                     <div class="results-count">找到 ${results.length} 條結果 ${exactMatch ? '(精確匹配)' : ''}</div>
                 </div>
             `;
+            
+            // 使用文档片段提高性能
+            const fragment = document.createDocumentFragment();
+            const tempDiv = document.createElement('div');
             
             results.forEach(item => {
                 const character = item.單字 || '';
@@ -741,7 +785,13 @@
                 `;
             });
             
-            resultsContainer.innerHTML = html;
+            tempDiv.innerHTML = html;
+            while (tempDiv.firstChild) {
+                fragment.appendChild(tempDiv.firstChild);
+            }
+            
+            resultsContainer.innerHTML = '';
+            resultsContainer.appendChild(fragment);
         }
         
         // 显示加载状态
